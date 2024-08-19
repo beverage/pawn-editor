@@ -1,18 +1,13 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{6AA80DAE-058C-4E97-8F1B-D6C344C53987}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PawnEditor</RootNamespace>
-    <AssemblyName>PawnEditor</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <Deterministic>true</Deterministic>
+    <TargetFramework>net472</TargetFramework>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <PublicizeAll>true</PublicizeAll>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
   </PropertyGroup>
+
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>portable</DebugType>
@@ -23,6 +18,7 @@
     <WarningLevel>4</WarningLevel>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
+
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugSymbols>false</DebugSymbols>
     <DebugType>none</DebugType>
@@ -34,106 +30,36 @@
     <WarningLevel>4</WarningLevel>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
+
+  <!-- While Krafs.Rimworld.Ref below does handle these dependencies, it does not seem to do so with Intellisense.
+      The project builds just find without these, without having to run the setup-osx.sh script at the project root.
+      These are here just to aid development. -->
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
+    <Reference Include="Assembly-CSharp">
+        <HintPath>../../Dependencies/Rimworld/Assembly-CSharp.dll</HintPath>
+        <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+        <HintPath>../../Dependencies/Rimworld/UnityEngine.CoreModule.dll</HintPath>
+        <Private>False</Private>
+    </Reference>
+      <Reference Include="UnityEngine.IMGUIModule">
+        <HintPath>../../Dependencies/Rimworld/UnityEngine.IMGUIModule.dll</HintPath>
+        <Private>False</Private>
+    </Reference>
+      <Reference Include="UnityEngine.TextRenderingModule">
+        <HintPath>../../Dependencies/Rimworld/UnityEngine.TextRenderingModule.dll</HintPath>
+        <Private>False</Private>
+    </Reference>
   </ItemGroup>
+
   <ItemGroup>
-    <PackageReference Include="Krafs.Publicizer">
-      <Version>2.2.1</Version>
+    <PackageReference Include="Krafs.Publicizer" Version="2.2.1">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Lib.Harmony">
-      <Version>2.3.3</Version>
-      <ExcludeAssets>runtime</ExcludeAssets>
-      <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Krafs.Rimworld.Ref" Version="1.5.4053-beta">
-      <ExcludeAssets>runtime</ExcludeAssets>
-      <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <Publicize Include="Assembly-CSharp" />
+    <PackageReference Include="Krafs.Rimworld.Ref" Version="1.5.4104" />
+    <PackageReference Include="Lib.Harmony" Version="2.3.3" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Defs\Defs.cs" />
-    <Compile Include="Dialogs\Dialog_AppearanceEditor.cs" />
-    <Compile Include="Dialogs\Dialog_ColorPicker.cs" />
-    <Compile Include="Dialogs\Dialog_Confirm.cs" />
-    <Compile Include="Dialogs\EditMenus\Dialog_EditHediff.cs" />
-    <Compile Include="Dialogs\EditMenus\Dialog_EditItem.cs" />
-    <Compile Include="Dialogs\Dialog_PawnEditor.cs" />
-    <Compile Include="Dialogs\Dialog_PawnEditorFiles.cs" />
-    <Compile Include="Dialogs\EditMenus\Dialog_EditRelation.cs" />
-    <Compile Include="Dialogs\EditMenus\Dialog_EditThing.cs" />
-    <Compile Include="Dialogs\EditMenus\Dialog_EditThought.cs" />
-    <Compile Include="Dialogs\ListingMenus\Filters\Filter.cs" />
-    <Compile Include="Dialogs\ListingMenus\Filters\Filter_Dropdown.cs" />
-    <Compile Include="Dialogs\ListingMenus\Filters\Filter_IntRange.cs" />
-    <Compile Include="Dialogs\ListingMenus\Filters\Filter_ModSource.cs" />
-    <Compile Include="Dialogs\ListingMenus\Filters\Filter_Toggle.cs" />
-    <Compile Include="Dialogs\ListingMenus\ListingMenu.cs" />
-    <Compile Include="Dialogs\ListingMenus\ListingMenu_Abilities.cs" />
-    <Compile Include="Dialogs\ListingMenus\ListingMenu_Backstories.cs" />
-    <Compile Include="Dialogs\ListingMenus\ListingMenu_Hediffs.cs" />
-    <Compile Include="Dialogs\ListingMenus\ListingMenu_Items.cs" />
-    <Compile Include="Dialogs\ListingMenus\ListingMenu_PawnKindDef.cs" />
-    <Compile Include="Dialogs\ListingMenus\ListingMenu_Pawns.cs" />
-    <Compile Include="Dialogs\ListingMenus\ListingMenu_Relations.cs" />
-    <Compile Include="Dialogs\ListingMenus\ListingMenu_Thought.cs" />
-    <Compile Include="Dialogs\ListingMenus\ListingMenu_Trait.cs" />
-    <Compile Include="ModCompat\FacialAnimCompat.cs" />
-    <Compile Include="ModCompat\HARCompat.cs" />
-    <Compile Include="Tabs\AnimalMech\TabWorker_Bio_AnimalMech.cs" />
-    <Compile Include="Tabs\Humanlike\Bio\BasicInfo.cs" />
-    <Compile Include="Tabs\Humanlike\TabWorker_Gear.cs" />
-    <Compile Include="Tabs\Humanlike\Bio\Groups.cs" />
-    <Compile Include="Tabs\Humanlike\Bio\LeftList.cs" />
-    <Compile Include="Tabs\Humanlike\Bio\Randomization.cs" />
-    <Compile Include="Tabs\Humanlike\Bio\TabWorker_Bio_Humanlike.cs" />
-    <Compile Include="Tabs\Humanlike\Bio\TopRightButtons.cs" />
-    <Compile Include="Tabs\Humanlike\TabWorker_Needs.cs" />
-    <Compile Include="Tabs\Humanlike\TabWorker_Social.cs" />
-    <Compile Include="Tabs\NPCFaction\TabWorker_FactionSettlements.cs" />
-    <Compile Include="Tabs\NPCFaction\TabWorker_NPCFactionOverview.cs" />
-    <Compile Include="Tabs\PlayerFaction\TabWorker_AnimalMech.cs" />
-    <Compile Include="Tabs\PlayerFaction\TabWorker_EquipmentLoot.cs" />
-    <Compile Include="Tabs\PlayerFaction\TabWorker_PlayerFactionOverview.cs" />
-    <Compile Include="Tabs\TabWorker_FactionOverview.cs" />
-    <Compile Include="Tabs\TabWorker_Health.cs" />
-    <Compile Include="UI\LeftPanel.cs" />
-    <Compile Include="UI\PawnCategory.cs" />
-    <Compile Include="Defs\PawnEditorDefOf.cs" />
-    <Compile Include="PawnEditorMod.cs" />
-    <Compile Include="UI\PawnEditorUI.cs" />
-    <Compile Include="UI\PawnList.cs" />
-    <Compile Include="UI\UITable.cs" />
-    <Compile Include="UI\Widgets.cs" />
-    <Compile Include="Utils\AddResult.cs" />
-    <Compile Include="Utils\CopyPaste.cs" />
-    <Compile Include="Utils\EditUtility.cs" />
-    <Compile Include="Utils\Listing_Thing.cs" />
-    <Compile Include="Utils\Listing_TreeThing.cs" />
-    <Compile Include="Utils\ColonyInventory.cs" />
-    <Compile Include="Utils\PawnLister.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SaveLoad\ReferenceManager.cs" />
-    <Compile Include="SaveLoad\SaveLoadItem.cs" />
-    <Compile Include="SaveLoad\SaveLoadPatches.cs" />
-    <Compile Include="SaveLoad\SaveLoadUtility.cs" />
-    <Compile Include="Utils\PointsSystem.cs" />
-    <Compile Include="Utils\RelationUtilities.cs" />
-    <Compile Include="Utils\StartingThingsManager.cs" />
-    <Compile Include="UI\TexPawnEditor.cs" />
-    <Compile Include="Utils\UIUtility.cs" />
-    <Compile Include="Utils\Utilities.cs" />
-  </ItemGroup>
-  <ItemGroup />
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+
 </Project>
