@@ -1,3 +1,8 @@
+.DS_Store
+Assemblies/**
+!Assemblies/PawnEditor.dll
+Dependencies/**
+
 bin
 obj
 .vs
