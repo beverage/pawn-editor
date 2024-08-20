@@ -54,8 +54,9 @@ In its simplest form, simply running `dotnet build Source/PawnEditor` from the r
 └── Utils
 ```
 
-### Dependencies
+### Dependencies / Resources
 
 - [Harmony](https://harmony.pardeike.net/articles/intro.html) (Indirectly now via RimRef.)
 - [Krafs.Publicizer](https://github.com/krafs/Publicizer)
 - [Krafs.RimRef](https://github.com/krafs/RimRef)
+- [Zetrith's HotSwap Mod](https://github.com/Zetrith/HotSwap)
