@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using GradientHair;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -82,22 +83,18 @@ public class Dialog_AppearanceEditor : Window
 
     private static bool InCategory(EndogeneCategory category, GeneDef gene)
     {
-        if (category <= EndogeneCategory.Voice) return gene.endogeneCategory == category;
-        switch (category)
-        {
-            case (EndogeneCategory)0xB:
-                return gene.exclusionTags.NotNullAndContains("Fur");
-            case (EndogeneCategory)0xC:
-                return gene.exclusionTags.NotNullAndContains("Tail");
-            case (EndogeneCategory)0xD:
-                return gene.exclusionTags.NotNullAndContains("HairStyle");
-            case (EndogeneCategory)0xE:
-                return gene.exclusionTags.NotNullAndContains("EyeColor");
-            case (EndogeneCategory)0xF:
-                return gene.exclusionTags.NotNullAndContains("BeardStyle");
-        }
+        if (category <= EndogeneCategory.Voice)
+            return gene.endogeneCategory == category;
 
-        return false;
+        return category switch
+        {
+            (EndogeneCategory)0xB => gene.exclusionTags.NotNullAndContains("Fur"),
+            (EndogeneCategory)0xC => gene.exclusionTags.NotNullAndContains("Tail"),
+            (EndogeneCategory)0xD => gene.exclusionTags.NotNullAndContains("HairStyle"),
+            (EndogeneCategory)0xE => gene.exclusionTags.NotNullAndContains("EyeColor"),
+            (EndogeneCategory)0xF => gene.exclusionTags.NotNullAndContains("BeardStyle"),
+            _ => false,
+        };
     }
 
     private static string GetLabel(EndogeneCategory category)
@@ -127,6 +124,7 @@ public class Dialog_AppearanceEditor : Window
     public override void DoWindowContents(Rect inRect)
     {
         Widgets.BeginGroup(inRect);
+
         using (new TextBlock(GameFont.Medium))
         {
             var rect = inRect.TakeTopPart(Text.LineHeight * 2.5f);
@@ -229,44 +227,82 @@ public class Dialog_AppearanceEditor : Window
 
                     break;
                 case MainTab.Hair:
+
                     shapeTabs.Clear();
                     shapeTabs.Add(new("PawnEditor.Head".Translate().CapitalizeFirst(), () => shapeTab = ShapeTab.Head, shapeTab == ShapeTab.Head));
                     shapeTabs.Add(new("PawnEditor.Beard".Translate(), () => shapeTab = ShapeTab.Body, shapeTab == ShapeTab.Body));
+
                     Widgets.DrawMenuSection(inRect);
                     TabDrawer.DrawTabs(inRect, shapeTabs);
+
                     switch (shapeTab)
                     {
                         case ShapeTab.Head:
+
                             var hairTypes = DefDatabase<HairDef>.AllDefs.Where(MatchesSource);
-                            if (HARCompat.Active && HARCompat.EnforceRestrictions) hairTypes = hairTypes.Where(hair => HARCompat.AllowStyleItem(hair, pawn));
-                            DoIconOptions(inRect.ContractedBy(5), hairTypes.ToList(), def =>
-                                {
-                                    pawn.story.hairDef = def;
-                                    TabWorker_Bio_Humanlike.RecacheGraphics(pawn);
-                                }, def => def.Icon,
-                                def => pawn.story.hairDef == def, 1, new[] { pawn.story.HairColor },
-                                (color, i) =>
-                                {
-                                    pawn.story.HairColor = color;
-                                    TabWorker_Bio_Humanlike.RecacheGraphics(pawn);
-                                }, ColorType.Hair,
-                                DefDatabase<ColorDef>.AllDefs.Where(static def => def.colorType == ColorType.Hair).Select(static def => def.color).ToList());
+                            var gradientTypes = DefDatabase<GradientHairMaskDef>.AllDefs;
+
+                            foreach (GradientHairMaskDef def in gradientTypes)
+                                Log.Message(def);
+
+                            if (HARCompat.Active && HARCompat.EnforceRestrictions)
+                                hairTypes = hairTypes.Where(hair => HARCompat.AllowStyleItem(hair, pawn));
+
+                            DoIconOptions(
+                                inRect:             inRect.ContractedBy(5),
+                                options:            hairTypes.ToList(),
+                                onSelected:         def =>
+                                                        {
+                                                            // Log.Message($"Selected hair {def}");
+                                                            pawn.story.hairDef = def;
+                                                            TabWorker_Bio_Humanlike.RecacheGraphics(pawn);
+                                                        },
+                                getIcon:            def => def.Icon,
+                                isSelected:         def => pawn.story.hairDef == def,
+                                colorCount:         1,
+                                colors:             [pawn.story.HairColor],
+                                setColor:           (color, i) =>
+                                                        {
+                                                            // Log.Message($"Selected color {color}: {i}");
+                                                            pawn.story.HairColor = color;
+
+                                                            // CompGradientHair comp = pawn.GetComp<CompGradientHair>();
+                                                            // comp.settings.enabled = true;
+                                                            // comp.settings.colorB = Color.red;
+
+                                                            TabWorker_Bio_Humanlike.RecacheGraphics(pawn);
+                                                        },
+                                colorType:          ColorType.Hair,
+                                availableColors:    DefDatabase<ColorDef>.AllDefs
+                                                        .Where(static def => def.colorType == ColorType.Hair)
+                                                        .Select(static def => def.color)
+                                                        .ToList());
                             break;
+
                         case ShapeTab.Body:
+
                             var beardTypes = DefDatabase<BeardDef>.AllDefs.Where(MatchesSource);
-                            if (HARCompat.Active && HARCompat.EnforceRestrictions) beardTypes = beardTypes.Where(hair => HARCompat.AllowStyleItem(hair, pawn));
+
+                            if (HARCompat.Active && HARCompat.EnforceRestrictions)
+                                beardTypes = beardTypes.Where(hair => HARCompat.AllowStyleItem(hair, pawn));
+
                             DoIconOptions(inRect.ContractedBy(5), beardTypes.ToList(), def =>
                                 {
                                     pawn.style.beardDef = def;
                                     TabWorker_Bio_Humanlike.RecacheGraphics(pawn);
                                 }, def => def.Icon,
-                                def => pawn.style.beardDef == def, 1, new[] { pawn.story.HairColor },
+                                def => pawn.style.beardDef == def, 1, [pawn.story.HairColor],
                                 (color, i) =>
                                 {
                                     pawn.story.HairColor = color;
                                     TabWorker_Bio_Humanlike.RecacheGraphics(pawn);
-                                }, ColorType.Hair,
-                                DefDatabase<ColorDef>.AllDefs.Where(static def => def.colorType == ColorType.Hair).Select(static def => def.color).ToList());
+                                },
+                                ColorType.Hair,
+                                DefDatabase<ColorDef>.AllDefs
+                                    .Where(static def => def.colorType == ColorType.Hair)
+                                    .Select(static def => def.color)
+                                    .ToList());
+
                             break;
                     }
 
@@ -320,15 +356,26 @@ public class Dialog_AppearanceEditor : Window
         Widgets.EndGroup();
     }
 
-    private void DoIconOptions<T>(Rect inRect, List<T> options, Action<T> onSelected, Func<T, Texture> getIcon, Func<T, bool> isSelected, int colorCount,
-        Color[] colors, Action<Color, int> setColor, ColorType colorType, List<Color> availableColors)
+    private void DoIconOptions<T>(
+        Rect                inRect, 
+        List<T>             options, 
+        Action<T>           onSelected, 
+        Func<T, Texture>    getIcon, 
+        Func<T, bool>       isSelected, 
+        int                 colorCount,
+        Color[]             colors, 
+        Action<Color, int>  setColor, 
+        ColorType           colorType, 
+        List<Color>         availableColors)
     {
         if (selectedColorIndex + 1 > colorCount) selectedColorIndex = 0;
+
         if (colorCount > 0)
         {
             var rect = new Rect(inRect.xMax - 26, inRect.yMax - 26, 18, 18);
             if (Widgets.ButtonImage(rect, Designator_Eyedropper.EyeDropperTex))
-                Find.WindowStack.Add(new Dialog_ColorPicker(color => setColor(color, selectedColorIndex), availableColors, colors[selectedColorIndex]));
+                Find.WindowStack.Add(new Dialog_ColorPicker(
+                    color => setColor(color, selectedColorIndex), availableColors, colors[selectedColorIndex]));
 
             for (var i = 0; i < colorCount; i++)
             {
@@ -341,6 +388,7 @@ public class Dialog_AppearanceEditor : Window
             var oldColor = colors[selectedColorIndex];
             Widgets.ColorSelector(inRect.TakeBottomPart(lastColorHeight + 10).ContractedBy(4), ref colors[selectedColorIndex], availableColors,
                 out lastColorHeight, colorSize: 18);
+
             if (colors[selectedColorIndex] != oldColor) setColor(colors[selectedColorIndex], selectedColorIndex);
         }
 
@@ -798,6 +846,8 @@ public class Dialog_AppearanceEditor : Window
 
     private enum MainTab
     {
+        //  The order will also be the order they appear in the UI.  They can either
+        //  be ordered directly here, or given explicit ordinal mappings.
         Shape,
         Hair,
         Tattoos,
@@ -807,7 +857,9 @@ public class Dialog_AppearanceEditor : Window
 
     private enum ShapeTab
     {
-        Body,
-        Head
+        //  The order will also be the order they appear in the UI.  They can either
+        //  be ordered directly here, or given explicit ordinal mappings.
+        Head,
+        Body
     }
 }
