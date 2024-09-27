@@ -129,13 +129,20 @@ public class Dialog_AppearanceEditor : Window
         {
             var rect = inRect.TakeTopPart(Text.LineHeight * 2.5f);
             rect.y += Text.LineHeight / 4;
+
             using (new TextBlock(TextAnchor.UpperLeft))
                 Widgets.Label(rect, "PawnEditor.EditAppearance".Translate());
+
             using (new TextBlock(TextAnchor.UpperRight))
             {
                 Widgets.Label(rect, pawn.Name.ToStringShort + (", " + pawn.story.TitleCap).Colorize(ColoredText.SubtleGrayColor));
+
                 var size = Text.CalcSize(pawn.Name.ToStringShort + ", " + pawn.story.TitleCap);
-                GUI.DrawTexture(new(rect.xMax - size.x - rect.height * 0.6f, rect.y - Text.LineHeight / 4, rect.height * 0.6f, rect.height * 0.6f),
+                GUI.DrawTexture(
+                    new(rect.xMax - size.x - rect.height * 0.6f,
+                        rect.y - Text.LineHeight / 4,
+                        rect.height * 0.6f,
+                        rect.height * 0.6f),
                     PawnEditor.GetPawnTex(pawn, new(rect.height, rect.height), Rot4.South));
             }
         }
@@ -148,6 +155,7 @@ public class Dialog_AppearanceEditor : Window
             mainTabs.Clear();
             mainTabs.Add(new("PawnEditor.Shape".Translate(), () => mainTab = MainTab.Shape, mainTab == MainTab.Shape));
             mainTabs.Add(new("PawnEditor.Hair".Translate().CapitalizeFirst(), () => mainTab = MainTab.Hair, mainTab == MainTab.Hair));
+
             if (ModsConfig.IdeologyActive)
                 mainTabs.Add(new("Tattoos".Translate(), () => mainTab = MainTab.Tattoos, mainTab == MainTab.Tattoos));
             if (ModsConfig.BiotechActive)
@@ -163,10 +171,12 @@ public class Dialog_AppearanceEditor : Window
             {
                 case MainTab.Shape:
                     shapeTabs.Clear();
-                    shapeTabs.Add(new("PawnEditor.Body".Translate(), () => shapeTab = ShapeTab.Body, shapeTab == ShapeTab.Body));
+                    shapeTabs.Add(new("PawnEditor.Body".Translate(),                   () => shapeTab = ShapeTab.Body, shapeTab == ShapeTab.Body));
                     shapeTabs.Add(new("PawnEditor.Head".Translate().CapitalizeFirst(), () => shapeTab = ShapeTab.Head, shapeTab == ShapeTab.Head));
+
                     Widgets.DrawMenuSection(inRect);
                     TabDrawer.DrawTabs(inRect, shapeTabs);
+
                     switch (shapeTab)
                     {
                         case ShapeTab.Body:
@@ -192,7 +202,7 @@ public class Dialog_AppearanceEditor : Window
                                     pawn.story.bodyType = def;
                                     TabWorker_Bio_Humanlike.RecacheGraphics(pawn);
                                 }, def => TexPawnEditor.BodyTypeIcons[def], def => pawn.story.bodyType == def, 1, new[] { pawn.story.SkinColor },
-                                (color, i) =>
+                                (color) =>
                                 {
                                     pawn.story.skinColorOverride = color;
                                     TabWorker_Bio_Humanlike.RecacheGraphics(pawn);
@@ -214,7 +224,7 @@ public class Dialog_AppearanceEditor : Window
                                     TabWorker_Bio_Humanlike.RecacheGraphics(pawn);
                                 }, def => def.GetGraphic(pawn, pawn.story.HairColor).MatSouth.mainTexture,
                                 def => pawn.story.headType == def, 1, new[] { pawn.story.SkinColor },
-                                (color, i) =>
+                                (color) =>
                                 {
                                     pawn.story.skinColorOverride = color;
                                     TabWorker_Bio_Humanlike.RecacheGraphics(pawn);
@@ -239,42 +249,40 @@ public class Dialog_AppearanceEditor : Window
                     {
                         case ShapeTab.Head:
 
-                            var hairTypes = DefDatabase<HairDef>.AllDefs.Where(MatchesSource);
+                            var hairTypes     = DefDatabase<HairDef>.AllDefs.Where(MatchesSource);
                             var gradientTypes = DefDatabase<GradientHairMaskDef>.AllDefs;
-
-                            foreach (GradientHairMaskDef def in gradientTypes)
-                                Log.Message(def);
 
                             if (HARCompat.Active && HARCompat.EnforceRestrictions)
                                 hairTypes = hairTypes.Where(hair => HARCompat.AllowStyleItem(hair, pawn));
 
-                            DoIconOptions(
+                            DoMultiColorIconOptions(
                                 inRect:             inRect.ContractedBy(5),
                                 options:            hairTypes.ToList(),
-                                onSelected:         def =>
+                                onSelected:         def => 
                                                         {
-                                                            // Log.Message($"Selected hair {def}");
                                                             pawn.story.hairDef = def;
                                                             TabWorker_Bio_Humanlike.RecacheGraphics(pawn);
                                                         },
                                 getIcon:            def => def.Icon,
                                 isSelected:         def => pawn.story.hairDef == def,
-                                colorCount:         1,
-                                colors:             [pawn.story.HairColor],
-                                setColor:           (color, i) =>
+                                primaryColor:       pawn.story.HairColor,
+                                secondaryColor:     pawn.GetComp<CompGradientHair>()?.settings.colorB ?? pawn.story.HairColor,
+                                setPrimaryColor:    (color) =>
                                                         {
-                                                            // Log.Message($"Selected color {color}: {i}");
+                                                            // Log.Message($"Selected primary color {color}");
                                                             pawn.story.HairColor = color;
-
-                                                            // CompGradientHair comp = pawn.GetComp<CompGradientHair>();
-                                                            // comp.settings.enabled = true;
-                                                            // comp.settings.colorB = Color.red;
-
                                                             TabWorker_Bio_Humanlike.RecacheGraphics(pawn);
                                                         },
-                                colorType:          ColorType.Hair,
+                                setSecondaryColor:  (color) =>
+                                                        {
+                                                            // Log.Message($"Selected secondary color {color}");
+                                                            CompGradientHair comp = pawn.GetComp<CompGradientHair>();
+                                                            comp.settings.enabled = true;
+                                                            comp.settings.colorB  = color;
+                                                            TabWorker_Bio_Humanlike.RecacheGraphics(pawn);
+                                                        },
                                 availableColors:    DefDatabase<ColorDef>.AllDefs
-                                                        .Where(static def => def.colorType == ColorType.Hair)
+                                                        // .Where(static def => def.colorType == ColorType.Hair || def.colorType == ColorType.Misc)
                                                         .Select(static def => def.color)
                                                         .ToList());
                             break;
@@ -286,13 +294,19 @@ public class Dialog_AppearanceEditor : Window
                             if (HARCompat.Active && HARCompat.EnforceRestrictions)
                                 beardTypes = beardTypes.Where(hair => HARCompat.AllowStyleItem(hair, pawn));
 
-                            DoIconOptions(inRect.ContractedBy(5), beardTypes.ToList(), def =>
+                            DoIconOptions(
+                                inRect.ContractedBy(5),
+                                beardTypes.ToList(),
+                                def => 
                                 {
                                     pawn.style.beardDef = def;
                                     TabWorker_Bio_Humanlike.RecacheGraphics(pawn);
-                                }, def => def.Icon,
-                                def => pawn.style.beardDef == def, 1, [pawn.story.HairColor],
-                                (color, i) =>
+                                },
+                                def => def.Icon,
+                                def => pawn.style.beardDef == def,
+                                1,
+                                [pawn.story.HairColor],
+                                (color) =>
                                 {
                                     pawn.story.HairColor = color;
                                     TabWorker_Bio_Humanlike.RecacheGraphics(pawn);
@@ -356,44 +370,154 @@ public class Dialog_AppearanceEditor : Window
         Widgets.EndGroup();
     }
 
-    private void DoIconOptions<T>(
-        Rect                inRect, 
-        List<T>             options, 
-        Action<T>           onSelected, 
-        Func<T, Texture>    getIcon, 
-        Func<T, bool>       isSelected, 
-        int                 colorCount,
-        Color[]             colors, 
-        Action<Color, int>  setColor, 
-        ColorType           colorType, 
+    private void DoMultiColorIconOptions<T>(
+        Rect                inRect,
+        List<T>             options,
+        Action<T>           onSelected,
+        Func<T, Texture>    getIcon,
+        Func<T, bool>       isSelected,
+        Color               primaryColor,
+        Color               secondaryColor,
+        Action<Color>       setPrimaryColor,
+        Action<Color>       setSecondaryColor,
         List<Color>         availableColors)
-    {
-        if (selectedColorIndex + 1 > colorCount) selectedColorIndex = 0;
+     {
 
-        if (colorCount > 0)
-        {
-            var rect = new Rect(inRect.xMax - 26, inRect.yMax - 26, 18, 18);
-            if (Widgets.ButtonImage(rect, Designator_Eyedropper.EyeDropperTex))
-                Find.WindowStack.Add(new Dialog_ColorPicker(
-                    color => setColor(color, selectedColorIndex), availableColors, colors[selectedColorIndex]));
+        List<(Color Color, Action<Color> Set)> colorSelectors = [(primaryColor, setPrimaryColor), (secondaryColor, setSecondaryColor)];
 
-            for (var i = 0; i < colorCount; i++)
-            {
-                rect.x -= 26;
-                Widgets.DrawBoxSolid(rect, colors[i]);
-                if (selectedColorIndex == i) Widgets.DrawBox(rect);
-                if (Widgets.ButtonInvisible(rect)) selectedColorIndex = i;
-            }
+        foreach (var selector in colorSelectors) {
 
-            var oldColor = colors[selectedColorIndex];
-            Widgets.ColorSelector(inRect.TakeBottomPart(lastColorHeight + 10).ContractedBy(4), ref colors[selectedColorIndex], availableColors,
-                out lastColorHeight, colorSize: 18);
+            var selectorRect = new Rect(inRect.xMax - 26, inRect.yMax - 26, 18, 18);
 
-            if (colors[selectedColorIndex] != oldColor) setColor(colors[selectedColorIndex], selectedColorIndex);
+            if (Widgets.ButtonImage(selectorRect, Designator_Eyedropper.EyeDropperTex))
+                Find.WindowStack.Add(new Dialog_ColorPicker(color => selector.Set(color), availableColors, selector.Color));
+
+            selectorRect.x -= 26;
+
+            Widgets.DrawBoxSolid(selectorRect, selector.Color);
+            Widgets.DrawBox(selectorRect);
+
+            var nextColor = selector.Color;
+
+            Widgets.ColorSelector(inRect.TakeBottomPart(lastColorHeight + 20).ContractedBy(4), 
+                ref nextColor,
+                availableColors,
+                out lastColorHeight,
+                colorSize: 18,
+                colorPadding: 2);
+
+            if (nextColor != selector.Color)
+                selector.Set(nextColor);
         }
 
         var itemsPerRow = 9;
         var itemSize = (inRect.width - 20) / itemsPerRow;
+
+        //
+        //  Force-fit 9 no matter what.  Is this really a good idea?
+        //
+
+        // while (itemSize > 192)
+        //     itemSize = (inRect.width - 20) / itemsPerRow++;
+
+        // while (itemSize < 48)
+        //     itemSize = (inRect.width - 20) / itemsPerRow--;
+
+        var viewRect = new Rect(0, 0, inRect.width - 20, Mathf.Ceil((float)options.Count / itemsPerRow) * itemSize);
+        Widgets.BeginScrollView(inRect, ref scrollPos, viewRect);
+
+        for (var i = 0; i < options.Count; i++)
+        {
+            var option = options[i];
+            var rect = new Rect(i % itemsPerRow * itemSize, Mathf.Floor((float)i / itemsPerRow) * itemSize, itemSize, itemSize).ContractedBy(6);
+            Widgets.DrawHighlight(rect);
+
+            if (option is Def def) {
+                if (Mouse.IsOver(rect))
+                {
+                    Widgets.DrawLightHighlight(rect);
+                    var str = def.label ?? def.defName;
+                    TooltipHandler.TipRegion(rect, str.CapitalizeFirst() + "\n\n" + "ModClickToSelect".Translate());
+                }
+            }
+
+            if (isSelected(option)) Widgets.DrawBox(rect);
+            if (Widgets.ButtonInvisible(rect)) onSelected(option);
+
+            GUI.DrawTexture(rect.ContractedBy(2), getIcon(option));
+        }
+
+        Widgets.EndScrollView();
+     }
+
+    private void DoIconOptions<T>(
+        Rect                inRect,
+        List<T>             options,
+        Action<T>           onSelected,
+        Func<T, Texture>    getIcon,
+        Func<T, bool>       isSelected,
+        int                 colorCount,     //  This is only ever called with 0 or 1.  Let's make it work with 2.
+        Color[]             colors,         //  ^- That seems to be more of a flag, than a value.  Greater than 1 makes everything vanish.
+        Action<Color>       setColor,
+        ColorType           colorType,      //  Perhaps finally using the Hair value of this could be useful?
+        List<Color>         availableColors)
+    {
+        if (selectedColorIndex + 1 > colorCount)
+            selectedColorIndex = 0;
+
+        if (colorCount > 1) {
+
+            var secondaryColorRect = new Rect(inRect.xMax - 26, inRect.yMax - 26, 18, 18);
+
+            if (Widgets.ButtonImage(secondaryColorRect, Designator_Eyedropper.EyeDropperTex))
+                Find.WindowStack.Add(new Dialog_ColorPicker(
+                    color => setColor(color), availableColors, colors[selectedColorIndex]));
+
+            secondaryColorRect.x -= 26;
+            Widgets.DrawBoxSolid(secondaryColorRect, colors[1]);
+            Widgets.DrawBox(secondaryColorRect);
+
+            var oldColor = colors[selectedColorIndex];
+
+            Widgets.ColorSelector(
+                inRect.TakeBottomPart(lastColorHeight + 20).ContractedBy(4),
+                ref colors[selectedColorIndex],
+                availableColors,
+                out lastColorHeight,
+                colorSize: 18);
+
+            if (colors[selectedColorIndex] != oldColor)
+                setColor(colors[selectedColorIndex]);
+        }
+
+        if (colorCount > 0)
+        {
+            var primaryColorRect = new Rect(inRect.xMax - 26, inRect.yMax - 26, 18, 18);
+
+            if (Widgets.ButtonImage(primaryColorRect, Designator_Eyedropper.EyeDropperTex))
+                Find.WindowStack.Add(new Dialog_ColorPicker(
+                    color => setColor(color), availableColors, colors[selectedColorIndex]));
+
+            primaryColorRect.x -= 26;
+            Widgets.DrawBoxSolid(primaryColorRect, colors[0]);
+            Widgets.DrawBox(primaryColorRect);
+
+            var oldColor = colors[selectedColorIndex];
+
+            Widgets.ColorSelector(
+                inRect.TakeBottomPart(lastColorHeight + 10).ContractedBy(4),
+                ref colors[selectedColorIndex],
+                availableColors,
+                out lastColorHeight,
+                colorSize: 18);
+
+            if (colors[selectedColorIndex] != oldColor)
+                setColor(colors[selectedColorIndex]);
+        }
+
+        var itemsPerRow = 9;
+        var itemSize = (inRect.width - 20) / itemsPerRow;
+
         while (itemSize > 192)
         {
             itemsPerRow++;

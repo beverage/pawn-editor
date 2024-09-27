@@ -86,8 +86,7 @@ public class Dialog_ColorPicker : Window
             using (new TextBlock(GameFont.Small, TextAnchor.MiddleLeft))
             {
                 ColorReadback(rightRect.TakeBottomPart(cellSize * 2 + cellGap), ref _selectedColor, _oldColor);
-                ColorPalette(rightRect, ref _selectedColor);
-
+                ColorPalette(rightRect.TakeTopPart(rightRect.height - cellSize - 2 * cellGap), ref _selectedColor);
 
                 leftRect.SplitHorizontallyWithMargin(out Rect hsvWidgetsRect, out Rect fieldsRect, out float _, 16f, topHeight: 150f);
                 ColorTextFields(fieldsRect);
@@ -98,6 +97,9 @@ public class Dialog_ColorPicker : Window
                 hsvRect.x += singleCharWidth;
                 Widgets.HSVColorWheel(hsvRect, ref _selectedColor, ref _hsvColorWheelDragging, 1f);
                 DoWidgets(widgetsRect);
+
+                if (_hsvColorWheelDragging)
+                    _onSelect?.Invoke(_selectedColor);
             }
 
             if (Event.current.type != EventType.Layout)
@@ -117,9 +119,12 @@ public class Dialog_ColorPicker : Window
 
     private void DoFooter(Rect inRect)
     {
-        if (Widgets.ButtonText(inRect.TakeLeftPart((UIUtility.BottomButtonSize.x)), "Cancel".Translate()))
+        if (Widgets.ButtonText(inRect.TakeLeftPart(UIUtility.BottomButtonSize.x), "Cancel".Translate()))
+        {
+            _onSelect?.Invoke(_oldColor);
             Close();
-        if (Widgets.ButtonText(inRect.TakeRightPart((UIUtility.BottomButtonSize.x)), "Accept".Translate()))
+        }
+        if (Widgets.ButtonText(inRect.TakeRightPart(UIUtility.BottomButtonSize.x), "Accept".Translate()))
             Accept();
     }
 

@@ -2,35 +2,34 @@ using GradientHair;
 using UnityEngine;
 using Verse;
 
-namespace PawnEditor
+namespace PawnEditor;
+
+public class PublicApi
 {
-    public class PublicApi
+    public static bool GetGradientHair(Pawn pawn, out bool enabled, out Color color)
     {
-        public static bool GetGradientHair(Pawn pawn, out bool enabled, out Color color)
+        CompGradientHair comp = pawn.GetComp<CompGradientHair>();
+        if (comp == null)
         {
-            CompGradientHair comp = pawn.GetComp<CompGradientHair>();
-            if (comp == null)
-            {
-                enabled = false;
-                color = Color.white;
-                return false;
-            }
-
-            GradientHairSettings settings = comp.Settings;
-            enabled = settings.enabled;
-            color = settings.colorB;
-            return true;
+            enabled = false;
+            color = Color.white;
+            return false;
         }
 
-        public static void SetGradientHair(Pawn pawn, bool enabled, Color color)
-        {
-            CompGradientHair comp = pawn.GetComp<CompGradientHair>();
-            if (comp == null) return;
+        GradientHairSettings settings = comp.Settings;
+        enabled = settings.enabled;
+        color = settings.colorB;
+        return true;
+    }
 
-            GradientHairSettings settings = comp.Settings;
+    public static void SetGradientHair(Pawn pawn, bool enabled, Color color)
+    {
+        CompGradientHair comp = pawn.GetComp<CompGradientHair>();
+        if (comp == null) return;
 
-            settings.enabled = enabled;
-            settings.colorB = color;
-        }
+        GradientHairSettings settings = comp.Settings;
+
+        settings.enabled = enabled;
+        settings.colorB = color;
     }
 }
